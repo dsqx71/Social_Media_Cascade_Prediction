@@ -17,7 +17,7 @@ temp = access_data.load_sparse_csr('Change_df_min/version2_df_min10.npz')
 model = lda.LDA(n_topics=25, n_iter=1000, random_state=1)
 
 x = model.fit_transform(temp)
-np.save('lda_result_version2',x)
+np.save(setting.processed_data_dir + 'lda_result_version2',x)
 
 topic_word = model.topic_word_  
 np.save('topic_word_25',topic_word)

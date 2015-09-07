@@ -1,4 +1,5 @@
 # -*- coding: UTF-8 -*-
+
 import numpy as np
 import pandas as pd
 import setting
@@ -9,6 +10,7 @@ def load_raw_data():
     读取原始文件
     return： 经过处理的dataframe
     '''
+
     with open(setting.raw_data_dir+'weibo_predict_data.txt')  as file:
         test  = [line.strip().split("\t") for line in file.readlines()]
     with open(setting.raw_data_dir+'weibo_train_data.txt')  as file:
@@ -17,7 +19,7 @@ def load_raw_data():
     test = pd.DataFrame(test)
     train = pd.DataFrame(train)
     #test.drop(78336,axis= 0,inplace=True)  # 这行的日期有错，并且content没有特别有价值的信息
-    test.loc[78336,2] = '2014-12-04'
+    test.loc[78336,2] = '2015-01-03'
     test[2] = pd.to_datetime(test[2])
     train[2] = pd.to_datetime(train[2])
     for i in range(3,6):
@@ -33,6 +35,8 @@ def load_processed_data(name):
 def output_result(result,name,docs=None):
     '''
       result: Dataframe     name: string    docs:  dict
+      把dataframe转换为输出格式，保存在csv文件中
+      docs为参数列表
     '''
     uid = pd.read_pickle(setting.processed_data_dir + 'uid_test')
     pid = pd.read_pickle(setting.processed_data_dir + 'pid_test')

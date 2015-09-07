@@ -1,6 +1,5 @@
 # -*- coding: UTF-8 -*-
 __author__ = 'DongXu'
-
 import numpy as np
 import pandas as pd
 import access_data
@@ -23,13 +22,12 @@ def clean_corpus():
     train = pd.DataFrame({'corpus' :train[6]})
     test  = pd.DataFrame({'corpus' : test[3]})
 
-    keyword = [r'http[0-9a-zA-Z?:=._@%/\-#&\+|]+' ,\
-                    r'//@',   r'@' ,  r'#' ,  r'【' ,r'《' ,r'\[' ]
+    keyword = [r'http[0-9a-zA-Z?:=._@%/\-#&\+|]+' ,r'//@',   r'@' ,  r'#' ,  r'【' ,r'《' ,r'\[' ]
 
     for string in keyword:
-        reg_http = re.compile(string)
-        train[string] = train['corpus'].map(lambda x : reg_http.subn(' ',x))
-        test[string] = test['corpus'].map(lambda x : reg_http.subn(' ',x))
+        reg = re.compile(string)
+        train[string] = train['corpus'].map(lambda x : reg.subn(' ',x))
+        test[string] = test['corpus'].map(lambda x : reg.subn(' ',x))
 
         train['corpus']  = train[string].map(lambda x:x[0])
         test['corpus']   = test[string].map(lambda x:x[0])
@@ -38,6 +36,7 @@ def clean_corpus():
         test[string]  = test[string].map(lambda x:x[1])
 
         logging.info('finished cleaning symbol %s' % string)
+
     return train,test
 
 def segment_word(raw_data):
@@ -67,7 +66,7 @@ def encode_label():
     '''
         给对原始的uid 排序，得到有序的pid
     '''
-    train , test = access_data.load_raw_data()
+    train,test = access_data.load_raw_data()
     uid_train = train[0].values
     uid_test  = test[0].values
 
