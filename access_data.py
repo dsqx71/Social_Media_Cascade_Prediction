@@ -41,6 +41,7 @@ def output_result(result,name,docs=None):
     uid = pd.read_pickle(setting.processed_data_dir + 'uid_test')
     pid = pd.read_pickle(setting.processed_data_dir + 'pid_test')
 
+#打印参数表
     if docs != None :
         docs = pd.Series(docs)
         docs.to_csv(setting.result_dir + name+'_parameters.txt')

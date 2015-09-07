@@ -5,7 +5,6 @@ import numpy as np
 import setting
 import logging
 
-
 logging.root.setLevel(level=logging.INFO)
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
 logging.info('Start to get features')
@@ -29,11 +28,11 @@ def produce_statistical_feature():
         test  = test.merge(group_train['share','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
 
     test.rename(columns={'share':'share_mean','comment':'comment_mean','zan':'zan_mean'},inplace=True)
-    train.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
-    test.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
+#    train.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
+#   test.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
+    test.fillna(-1,inplace=True)
 
-    test.fillna(0,inplace=True)
-    # 在 training set 和test set 中 和用户发送微博的总数量
+    #在training set和test set中和用户发送微博的总数量
     tot = pd.concat([pd.DataFrame(train['uid']),pd.DataFrame(test['uid'])])
     c = pd.DataFrame(tot['uid'].value_counts())
     c.columns = ['tot_counts']
