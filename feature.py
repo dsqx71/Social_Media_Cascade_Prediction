@@ -19,26 +19,30 @@ def produce_statistical_feature():
     group_train = train.groupby('uid')
 
     for f in func:
-        train = train.merge(group_train['shar   e','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
+        train = train.merge(group_train['share','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
         test  = test.merge(group_train['share','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
+
+    train = train.merge(group_train['share','comment','zan'].agg(lambda x:np.histogram(x,bins=[0,1,3,10,33,100,333,1000,100000])),left_on='uid',right_index=True,suffixes=('','_'+'histogram'),how='left')
+    test  = test.merge(group_train['share','comment','zan'].agg(lambda x:np.histogram(x,bins=[0,1,3,10,33,100,333,1000,100000])),left_on='uid',right_index=True,suffixes=('','_'+'histogram'),how='left')
+
+    for string in ['share','comment','zan']:
+        temp = string + '_histogram'
+        train[temp] = train[temp].map(lambda x:x[0])
 
     test.rename(columns={'share':'share_mean','comment':'comment_mean','zan':'zan_mean'},inplace=True)
 #   train.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
 #   test.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
-    test.fillna(-1,inplace=True)
 
     #在training set和test set中和用户发送微博的总数量
     tot = pd.concat([pd.DataFrame(train['uid']),pd.DataFrame(test['uid'])])
     c = pd.DataFrame(tot['uid'].value_counts())
     c.columns = ['tot_counts']
-
     train = train.merge(c,left_on='uid',right_index=True,how='left')
     test  = test.merge(c,left_on='uid',right_index=True,how='left')
 
     # 用户出现在训练集的次数
     c = pd.DataFrame(train['uid'].value_counts())
     c.columns = ['train_counts']
-
     train = train.merge(c,left_on='uid',right_index=True,how='left')
     test  = test.merge(c,left_on='uid',right_index=True,how='left')
 
@@ -46,5 +50,20 @@ def produce_statistical_feature():
     train['content_len'] = train['raw_corpus'].map(lambda x: len(x))
     test['content_len']  = test['raw_corpus'].map(lambda x:len(x))
 
+    #文本的统计量
+    tot = pd.concat([pd.DataFrame(train[['uid','content_len']]),pd.DataFrame(test[['uid','content_len']])])
+    group = tot.groupby('uid')
 
+    for f in func:
+       temp = pd.DataFrame({'content_len_'+f.func_name:group['content_len'].agg(f)})
+       train = train.merge(temp,left_on='uid',right_index=True,how='left')
+       test  = test.merge(temp,left_on='uid',right_index=True,how='left')
+
+    temp = pd.DataFrame({'content_len_histogram':group['content_len'].agg(lambda x:np.histogram(x,bins=[0,5,10,20,50,100,200,300,400,500]))})
+    train = train.merge(temp,left_on='uid',right_index=True,how='left')
+    test  = test.merge(temp,left_on='uid',right_index=True,how='left')
+    train['content_len_histogram'] = train['content_len_histogram'].map(lambda  x:x[0])
+    test['content_len_histogram']  = test['content_len_histogram'].map(lambda x:x[0])
+    test.fillna(-1,inplace=True)
+    train.fillna(-1,inplace=True)
     return train,test
