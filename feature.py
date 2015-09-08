@@ -7,7 +7,6 @@ import logging
 
 logging.root.setLevel(level=logging.INFO)
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
-logging.info('Start to get features')
 
 def produce_statistical_feature():
     '''
@@ -19,16 +18,12 @@ def produce_statistical_feature():
     func = [np.mean,np.max,np.min,np.std]
     group_train = train.groupby('uid')
 
-    '''
-        用户在训练集中的share，comment，zan的统计特征，由于测试集中许多用户没有出现在训练集中，所以test中有许多缺失值
-        测试集中900+用户，800+不在训练集中,所以仅靠share，comment，zan没有什么用。
-    '''
     for f in func:
-        train = train.merge(group_train['share','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
+        train = train.merge(group_train['shar   e','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
         test  = test.merge(group_train['share','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
 
     test.rename(columns={'share':'share_mean','comment':'comment_mean','zan':'zan_mean'},inplace=True)
-#    train.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
+#   train.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
 #   test.fillna({'share_std':1.89*1.5,'comment_std':1.19*1.5,'zan_std':0.588*1.5},inplace=True)
     test.fillna(-1,inplace=True)
 

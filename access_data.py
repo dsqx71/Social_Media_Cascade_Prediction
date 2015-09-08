@@ -23,7 +23,7 @@ def load_raw_data():
     test[2] = pd.to_datetime(test[2])
     train[2] = pd.to_datetime(train[2])
     for i in range(3,6):
-        train[i] = train[i].astype(np.int8)
+        train[i] = train[i].astype(np.int32)
     return train,test
 
 def  save_processed_data(x,name):
