@@ -51,17 +51,27 @@ def produce_statistical_feature():
     test['content_len']  = test['raw_corpus'].map(lambda x:len(x))
 
     #文本的统计量
-    tot = pd.concat([pd.DataFrame(train[['uid','content_len']]),pd.DataFrame(test[['uid','content_len']])])
+    tot = pd.concat([pd.DataFrame(train[['uid','content_len','链接','//@','@','#','【','《','\[']]),\
+                              pd.DataFrame(test[['uid','content_len','链接','//@','@','#','【','《','\[']])])
     group = tot.groupby('uid')
 
     for f in func:
-       temp = pd.DataFrame({'content_len_'+f.func_name:group['content_len'].agg(f)})
-       train = train.merge(temp,left_on='uid',right_index=True,how='left')
-       test  = test.merge(temp,left_on='uid',right_index=True,how='left')
+       train = train.merge(group['content_len','链接','//@','@','#','【','《','\['],left_on='uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
+       test  = test.merge(group['content_len','链接','//@','@','#','【','《','\['],left_on='uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
 
-    temp = pd.DataFrame({'content_len_histogram':group['content_len'].agg(lambda x:np.histogram(x,bins=[0,5,10,20,50,100,200,300,400,500]))})
-    train = train.merge(temp,left_on='uid',right_index=True,how='left')
-    test  = test.merge(temp,left_on='uid',right_index=True,how='left')
+    for string,values in {'content_len':[0,5,10,20,50,100,200,300,430],\
+                                    '链接':[0,1,2,3,12],
+                                    '//@':[],
+                                    '@':[],
+                                    '#':[],
+                                    '【':[],
+                                    '《':[],
+                                    '\[':[]
+                                    }:
+        temp = pd.DataFrame({string:'_histogram':group['content_len'].agg(lambda x:np.histogram(x,bins=[0,5,10,20,50,100,200,300,400,500]))})
+        train = train.merge(temp,left_on='uid',right_index=True,how='left')
+        test  = test.merge(temp,left_on='uid',right_index=True,how='left')
+
     train['content_len_histogram'] = train['content_len_histogram'].map(lambda  x:x[0])
     test['content_len_histogram']  = test['content_len_histogram'].map(lambda x:x[0])
     test.fillna(-1,inplace=True)
