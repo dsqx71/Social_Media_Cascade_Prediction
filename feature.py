@@ -71,9 +71,8 @@ def  content_basic_feature():
     for f in func:
        train = train.merge(group['content_len','链接','//@','@','#','【','《','\['].agg(f),left_on='uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
        test  = test.merge(group['content_len','链接','//@','@','#','【','《','\['].agg(f),left_on='uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
-
-    train.rename(columns={'链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[_mean'})
-    test.rename(columns={'链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[_mean'})
+    train.rename(columns={'链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[':'\[_mean'},inplace=True)
+    test.rename(columns={'链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[':'\[_mean'},inplace=True)
     for string,values in [('content_len',[0,5,10,20,50,100,200,300,430]),
                                    ('链接',[0,1,2,3,12]),
                                    ('//@',[0,1,2,15]),
