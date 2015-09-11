@@ -78,7 +78,7 @@ def  content_basic_feature():
     train.fillna(-1,inplace=True)
 
     train.drop('uid',axis=1,inplace=True)
-    test.drop('uid',axis = 1,inplace=True)
+    test.drop('uid',axis =1,inplace=True)
     train.set_index('pid',inplace=True)
     test.set_index('pid',inplace=True)
 
