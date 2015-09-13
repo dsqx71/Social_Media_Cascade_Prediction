@@ -1,22 +1,16 @@
 # -*- coding: UTF-8 -*-
-
 import pandas as pd
 import numpy as np
 import setting
-import logging
 from setting import func
 
-logging.root.setLevel(level=logging.INFO)
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
-
-def  user_basic_feature():
+def  user_basic_feature(basic_train,basic_test):
     '''
             根据基本的特征进行扩展,增加统计特征，min，max，std，histogram等
     '''
-    train = pd.read_pickle(setting.raw_data_dir + 'basic_train')
-    test = pd.read_pickle(setting.raw_data_dir + 'basic_test')
+    train = basic_train[['uid','pid','share','comment','zan']].copy()
+    test =    basic_test[['uid','pid']].copy()
 
-#  计算share、comment、zan的统计量
     group_train = train.groupby('uid')
     for f in func:
         train = train.merge(group_train['share','comment','zan'].agg(f),left_on='uid',right_index=True,suffixes=('','_'+f.func_name),how='left')
@@ -26,22 +20,22 @@ def  user_basic_feature():
         temp = pd.DataFrame({string+'_histogram':group_train[string].agg(lambda x:np.histogram(x,bins=[-1,1,3,10,33,100,333,1000,100000]))})
         train = train.merge(temp,left_on='uid',right_index=True,suffixes=('','_'+'histogram'),how='left')
         test  =   test.merge(temp,left_on='uid',right_index=True,suffixes=('','_'+'histogram'),how='left')
-    test.rename(columns={'share':'share_mean','comment':'comment_mean','zan':'zan_mean'},inplace=True)
 
+    test.rename(columns={'share':'share_mean','comment':'comment_mean','zan':'zan_mean'},inplace=True)
     test.fillna(-1,inplace=True)
     train.fillna(-1,inplace=True)
-#    for name in ['share','comment','zan']:
-#        train[name+'_histogram'] = train[name+'_histogram'].map(lambda x: x[0] )
-#        test[name+'_histogram'] = test[name+'_histogram'].map(lambda x: x[0] )
+
+    train[['share_mean','comment_mean','zan_mean','share_std','comment_std','zan_std']] =  train[['share_mean','comment_mean','zan_mean','share_std','comment_std','zan_std']] .astype(np.float32)
+    test[['share_mean','comment_mean','zan_mean','share_std','comment_std','zan_std']]  = test[['share_mean','comment_mean','zan_mean','share_std','comment_std','zan_std']].astype(np.float32)
+
     return train,test
 
-def  content_basic_feature():
+def  content_basic_feature(basic_train,basic_test):
     '''
         文本长度和符号的统计量
     '''
-    train = pd.read_pickle(setting.raw_data_dir + 'basic_train')
-    test = pd.read_pickle(setting.raw_data_dir + 'basic_test')
-
+    train  = basic_train
+    test   = basic_test
     #统计文本长度
     train['content_len'] = train['raw_corpus'].map(lambda x:len(x))
     test['content_len']  = test['raw_corpus'].map(lambda x:len(x))
