@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import pandas as pd
 import numpy as np
-import setting
+
 from setting import func
 
 def  user_basic_feature(basic_train,basic_test):
@@ -34,8 +34,8 @@ def  content_basic_feature(basic_train,basic_test):
     '''
         文本长度和符号的统计量
     '''
-    train  = basic_train
-    test   = basic_test
+    train  = basic_train[['uid','pid','raw_corpus','链接','//@','@','#','【','《','\[']].copy()
+    test   = basic_test[['uid','pid','raw_corpus','链接','//@','@','#','【','《','\[']].copy()
     #统计文本长度
     train['content_len'] = train['raw_corpus'].map(lambda x:len(x))
     test['content_len']  = test['raw_corpus'].map(lambda x:len(x))
@@ -50,8 +50,8 @@ def  content_basic_feature(basic_train,basic_test):
     for f in func:
        train = train.merge(group['content_len','链接','//@','@','#','【','《','\['].agg(f),left_on='uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
        test  = test.merge(group['content_len','链接','//@','@','#','【','《','\['].agg(f),left_on='uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
-    train.rename(columns={'链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[':'\[_mean'},inplace=True)
-    test.rename(columns={'链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[':'\[_mean'},inplace=True)
+    train.rename(columns={'content_len':'content_len_mean','链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[':'\[_mean'},inplace=True)
+    test.rename(columns={'content_len':'content_len_mean','链接':'链接_mean','//@':'//@_mean','@':'@_mean','#':'#_mean','【':'【_mean','《':'《_mean','\[':'\[_mean'},inplace=True)
 
     for string,values in [('content_len',[0,5,10,20,50,100,200,300,430]),
                                    ('链接',[0,1,2,3,12]),
@@ -76,17 +76,21 @@ def  content_basic_feature(basic_train,basic_test):
     train.set_index('pid',inplace=True)
     test.set_index('pid',inplace=True)
 
+    for string  in ['content_len','链接','//@','@','#','【','《','\[']:
+        train[string+"_mean"] = train[string+"_mean"] .astype(np.float32)
+        train[string+"_std"] = train[string+"_std"].astype(np.float32)
+        test[string+"_mean"] = test[string+"_mean"] .astype(np.float32)
+        test[string+"_std"] = test[string+"_std"].astype(np.float32)
+
     return train,test
 
 
-def  time_feature():
+def  time_feature(basic_train,basic_test):
     '''
         时间特征
     '''
-    train = pd.read_pickle('raw_data/basic_train')
-    test  = pd.read_pickle('raw_data/basic_test')
-    train = train[['uid','pid','time','tot_counts','raw_corpus']]
-    test  = test[['uid','pid','time','tot_counts','raw_corpus']]
+    train = basic_train[['uid','pid','time','tot_counts','raw_corpus']].copy()
+    test  = basic_test[['uid','pid','time','tot_counts','raw_corpus']].copy()
 
     #星期几
     train['dayofweek']  = train.time.dt.dayofweek
