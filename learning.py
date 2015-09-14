@@ -11,7 +11,7 @@ RandomForestClassifier,RandomForestRegressor,GradientBoostingClassifier,Gradient
 from sklearn.tree import DecisionTreeRegressor,DecisionTreeClassifier
 
 def clf(num, train_x,  train_y, train_y_class):
-    logging.info("start to learning clf :" + num)
+    logging.info("Start to learning clf :" + str(num))
     c = GradientBoostingClassifier(learning_rate=0.1,n_estimators=1500,subsample=0.5,max_leaf_nodes=10,max_features=50,verbose=2)
     weight = train_y +1
     c.fit(train_x,train_y_class,sample_weight=weight)
@@ -19,7 +19,7 @@ def clf(num, train_x,  train_y, train_y_class):
 
 
 def regression(num,train_x,train_y):
-    logging.info("start to learning regression :" + num)
+    logging.info("start to learning regression :" + str(num))
     regressor =GradientBoostingRegressor(learning_rate=0.1,n_estimators=1500,subsample=0.5,max_leaf_nodes= 10,max_features=50,verbose=2)
     regressor.fit(train_x,train_y,sample_weight=train_y+1)
     return regressor,num,'regression'
@@ -39,23 +39,20 @@ if __name__ == '__main__':
     train_y_class[train_y[:,1]>0,1] = 1
     train_y_class[train_y[:,2]>0,2] = 1
     #train_y = np.log1p(train_y)
+
     p = Pool(1)
     temp = []
     for num in xrange(1):
-        temp.append(p.apply_async(clf,args=(num,train_x,train_y[:,num],train_y_class[:,num])))
-        mask = train_y_class[:,num] >0
-        temp.append(p.apply_async(regression,args=(num,train_x[mask],train_y[mask,num])))
-
+        #temp.append(p.apply_async(clf,args=(num,train_x,train_y[:,num],train_y_class[:,num])))
+        #mask = train_y_class[:,num] >0
+        temp.append(p.apply_async(regression,args=(num,train_x,train_y[:,num])))
     p.close()
     p.join()
-
     result = []
     for i in temp:
         result.append(i.get())
-
     with open('result','wb') as file:
         cPickle.dump(result,file)
-
 
 
 
