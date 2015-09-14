@@ -10,21 +10,19 @@ from sklearn.ensemble import AdaBoostClassifier,AdaBoostRegressor,\
 RandomForestClassifier,RandomForestRegressor,GradientBoostingClassifier,GradientBoostingRegressor
 from sklearn.tree import DecisionTreeRegressor,DecisionTreeClassifier
 
-def clf(num,train_x,train_y,train_y_class):
+def clf(num, train_x,  train_y, train_y_class):
     logging.info("start to learning clf :" + num)
     c = GradientBoostingClassifier(learning_rate=0.1,n_estimators=1500,subsample=0.5,max_leaf_nodes=10,max_features=50,verbose=2)
-    weight = train_y[:,num] +1
-    c.fit(train_x,train_y_class[:,num],sample_weight=weight)
-    return c
+    weight = train_y +1
+    c.fit(train_x,train_y_class,sample_weight=weight)
+    return c,num,'clf'
 
 
-def regression(num,train_x,train_y,train_y_class):
+def regression(num,train_x,train_y):
     logging.info("start to learning regression :" + num)
     regressor =GradientBoostingRegressor(learning_rate=0.1,n_estimators=1500,subsample=0.5,max_leaf_nodes= 10,max_features=50,verbose=2)
-    mask = train_y_class[:,num] >0
-    weight = train_y[mask,num] +1
-    regressor.fit(train_x[mask],train_y[mask,num],sample_weight=weight)
-    return regressor
+    regressor.fit(train_x,train_y,sample_weight=train_y+1)
+    return regressor,num,'regression'
 
 if __name__ == '__main__':
 
@@ -41,15 +39,22 @@ if __name__ == '__main__':
     train_y_class[train_y[:,1]>0,1] = 1
     train_y_class[train_y[:,2]>0,2] = 1
     #train_y = np.log1p(train_y)
-    p = Pool()
-    result = []
-    for i in xrange(3):
-        result.append(p.apply_async(clf,args=(i,train_x,train_y,train_y_class)))
-        result.append(p.apply_async(regression,args=(i,train_x,train_y,train_y_class)))
+    p = Pool(1)
+    temp = []
+    for num in xrange(1):
+        temp.append(p.apply_async(clf,args=(num,train_x,train_y[:,num],train_y_class[:,num])))
+        mask = train_y_class[:,num] >0
+        temp.append(p.apply_async(regression,args=(num,train_x[mask],train_y[mask,num])))
+
     p.close()
     p.join()
-    for i in result:
-        cPickle.dump(i.get(),"No_"+str(i))
+
+    result = []
+    for i in temp:
+        result.append(i.get())
+
+    with open('result','wb') as file:
+        cPickle.dump(result,file)
 
 
 
