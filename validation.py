@@ -4,7 +4,6 @@ import pandas as pd
 
 from sklearn.metrics import make_scorer
 from sklearn.ensemble import RandomForestRegressor
-from sklearn.cross_validation import  cross_val_score
 from sklearn.cross_validation import  KFold
 import logging
 
@@ -53,32 +52,33 @@ if __name__ == '__main__':
     weight = 1 + train_y[:,0] + train_y[:,1] + train_y[:,2]
     max = -1
     who = -1
-    kf = KFold(1626750,3)
-    for max_depth  in [4,8,10,12,14,16]:
+    scores= []
+    for max_depth  in [10,12,14,16]:
         tot = 0
-        scores = 0
-        for mask_train,mask_test in kf:
-            rf = RandomForestRegressor(n_estimators=2,max_features=35,max_depth=max_depth,n_jobs=2,verbose=2)
-            rf.fit(train_x[mask_train],train_y[mask_train],weight[mask_train])
-            scores += score(rf,train_x[mask_test],train_y[mask_test])
-        scores  = scores /3.0
+        for time in [pd.Timestamp('2014-11-15'),pd.Timestamp('2014-11-30'),pd.Timestamp('2014-12-15')]:
+            rf = RandomForestRegressor(n_estimators=1,max_features=35,max_depth=max_depth,n_jobs=1,verbose=2)
+            mask = time_validation(train_basic,time)
+            rf.fit(train_x[mask],train_y[mask],weight[mask])
+            tot = tot +  score(rf,train_x[~mask],train_y[~mask])
 
-        tot = tot +scores
+        for i in xrange(3):
+            rf = RandomForestRegressor(n_estimators=1,max_features=35,max_depth=max_depth,n_jobs=1,verbose=2)
+            mask = user_validation(train_basic)
+            rf.fit(train_x[mask],train_y[mask],weight[mask])
+            tot = tot + score(rf,train_x[~mask],train_y[~mask])
 
-        rf = RandomForestRegressor(n_estimators=2,max_features=35,max_depth=max_depth,n_jobs=2,verbose=2)
-        mask = time_validation(train_basic)
-        rf.fit(train_x[mask],train_y[mask],weight[mask])
-        tot = tot +  score(rf,train_x[~mask],train_y[~mask])
+        tot = tot /6.0
 
-        rf = RandomForestRegressor(n_estimators=2,max_features=35,max_depth=max_depth,n_jobs=2,verbose=2)
-        mask = user_validation(train_basic)
-        rf.fit(train_x[mask],train_y[mask],weight[mask])
-        tot = tot + score(rf,train_x[~mask],train_y[~mask])
-        tot = tot /3.0
         if tot>max:
             max = tot
             who = max_depth
-        print tot
+        scores.append((tot,max_depth))
+
+    for i,j in scores:
+        print "scores:{}   who:{}".format(i,j)
+
+    print "max:{},who:{}".format(max,who)
+
 
 
 
