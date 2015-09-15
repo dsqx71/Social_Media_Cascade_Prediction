@@ -53,22 +53,24 @@ if __name__ == '__main__':
     max = -1
     who = -1
     scores= []
-    for max_depth  in [10,12,14,16]:
+    last = -1
+    for max_depth  in [16,18,20,22,24,25]:
+        logging.info('Start to try {}'.format(max_depth))
         tot = 0
+
         for time in [pd.Timestamp('2014-11-15'),pd.Timestamp('2014-11-30'),pd.Timestamp('2014-12-15')]:
             rf = RandomForestRegressor(n_estimators=1,max_features=35,max_depth=max_depth,n_jobs=1,verbose=2)
             mask = time_validation(train_basic,time)
             rf.fit(train_x[mask],train_y[mask],weight[mask])
             tot = tot +  score(rf,train_x[~mask],train_y[~mask])
 
-        for i in xrange(3):
+        for ratio in [0.25,0.2,0.15]:
             rf = RandomForestRegressor(n_estimators=1,max_features=35,max_depth=max_depth,n_jobs=1,verbose=2)
-            mask = user_validation(train_basic)
+            mask = user_validation(train_basic,ratio_val=ratio)
             rf.fit(train_x[mask],train_y[mask],weight[mask])
             tot = tot + score(rf,train_x[~mask],train_y[~mask])
 
         tot = tot /6.0
-
         if tot>max:
             max = tot
             who = max_depth
@@ -76,7 +78,6 @@ if __name__ == '__main__':
 
     for i,j in scores:
         print "scores:{}   who:{}".format(i,j)
-
     print "max:{},who:{}".format(max,who)
 
 

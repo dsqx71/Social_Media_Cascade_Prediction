@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 import pandas as pd
 import numpy as np
-
+import re
 from setting import func
 
 def  user_basic_feature(basic_train,basic_test):
@@ -133,3 +133,6 @@ def  time_feature(basic_train,basic_test):
     test.drop(['raw_corpus','uid','time','tot_counts'],inplace=True,axis=1)
 
     return train,test
+
+
+def key_word_feature(basic_train,basic_test):
