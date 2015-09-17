@@ -5,33 +5,50 @@ import pandas as pd
 import setting
 from scipy.sparse import csr_matrix
 
-def load_raw_data():
+
+def input_data(version=0):
     '''
     读取原始文件
     return： 经过处理的dataframe
     '''
 
-    with open(setting.raw_data_dir+'weibo_predict_data.txt')  as file:
-        test  = [line.strip().split("\t") for line in file.readlines()]
-    with open(setting.raw_data_dir+'weibo_train_data.txt')  as file:
-        train = [line.strip().split("\t") for line in file.readlines()]
-
+    if version ==0:
+        with open(setting.raw_data_dir+'weibo_predict_data.txt')  as file:
+            test  = [line.strip().split("\t") for line in file.readlines()]
+        with open(setting.raw_data_dir+'weibo_train_data.txt')  as file:
+            train = [line.strip().split("\t") for line in file.readlines()]
+    else:
+        with open(setting.raw_data_dir+'weibo_predict_data2.txt')  as file:
+            test  = [line.strip().split("\t") for line in file.readlines()]
+        with open(setting.raw_data_dir+'weibo_train_data2.txt')  as file:
+             train = [line.strip().split("\t") for line in file.readlines()]
     test = pd.DataFrame(test)
     train = pd.DataFrame(train)
-    #test.drop(78336,axis= 0,inplace=True)  # 这行的日期有错，并且content没有特别有价值的信息
-    test.loc[78336,2] = '2015-01-03'
+    if version ==0:
+        test.loc[78336,2] = '2015-01-03'
+
     test[2] = pd.to_datetime(test[2])
     train[2] = pd.to_datetime(train[2])
+
     for i in range(3,6):
         train[i] = train[i].astype(np.int32)
+    if version == 1:
+        temp = train[0].copy()
+        train[0] = train[1]
+        train[1] = temp
+
+        temp = test[0].copy()
+        test[0] = test[1]
+        test[1] = temp
+
     return train,test
 
-def load_raw_data_new():
-    with open(setting.raw_data_dir+'weibo_predict_data2.txt')  as file:
-        test  = [line.strip().split("\t") for line in file.readlines()]
-    with open(setting.raw_data_dir+'weibo_train_data2.txt')  as file:
-        train = [line.strip().split("\t") for line in file.readlines()]
-    test = pd.DataFrame(test)
+def load_raw_data():
+
+    train1,_ = input_data(version=0)
+    train2,test2 = input_data(version=1)
+    return pd.concat([train1,train2],axis=0),test2
+
 def  save_processed_data(x,name):
     x.to_pickle(setting.processed_data_dir+name)
 
