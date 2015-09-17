@@ -149,7 +149,7 @@ def key_word_feature(basic_train,basic_test):
     wenben = ['创业','分享自','知乎','正品','机器学习','大数据','python','公开课','论文','周杰伦','推荐','美女','预约','曝光',\
           '优酷','天气','吐槽','双11','百度钱包','狂欢节','美拍','校园招聘','骚扰他人','人身攻击','有才','余额宝','mysql','客户端',\
           '抢购','降价','优惠活动','《','幸运用户','虾米音乐','过节','嘻嘻','陌陌','签到','死亡','身亡','综合运势','星座','呵呵','看过《',\
-          'tmd','TMD','腐败','红包','反腐','我参与了','转发','re']
+          'tmd','TMD','腐败','红包','反腐','我参与了','转发','热卖']
     for string in wenben:
         reg  = re.compile(string)
         train[string] = train['raw_corpus'].map(lambda x : reg.subn('',x)[1])
@@ -168,14 +168,20 @@ def clustering_feature(basic_train,basic_test):
                     'content_len_amax','链接_amax','//@_amax','@_amax','#_amax','【_amax','《_amax','\[_amax',
                     'content_len_amin','链接_amin','//@_amin','@_amin','#_amin','【_amin','《_amin','\[_amin',
                     'content_len_std','链接_std','//@_std','@_std','#_std','【_std','《_std','\[_std',
-                    'ratio_week0','ratio_week1','ratio_week2','ratio_week3','ratio_week4','ratio_week5','ratio_week6','uid']
+                    'ratio_week0','ratio_week1','ratio_week2','ratio_week3','ratio_week4','ratio_week5','ratio_week6','uid',
+                    ]
+    for i in xrange(25):
+        feature.append('topic_'+str(i))
+        feature.append('topic_{}_mean'.format(i))
+        feature.append('topic_{}_std'.format(i))
+
     data = pd.concat([basic_train[feature],basic_test[feature]],axis=0)
     data = data.groupby('uid').agg(lambda x:np.unique(x))
 
     bic = []
     lowest = np.infty
     flag = 0
-    for n_component  in range(24,40,1):
+    for n_component  in xrange(20,50):
         gmm = mixture.GMM(n_components=n_component,covariance_type='full')
         gmm.fit(data.values)
         bic.append(gmm.bic(data.values))
@@ -190,4 +196,32 @@ def clustering_feature(basic_train,basic_test):
             print n_component
             break
     return best_gmm.predict_proba(data.values),best_gmm,data.index
+
+def lda_feature(basic_train,basic_test):
+
+    feature = ['uid','pid']
+    for i in xrange(25):
+        feature.append('topic_'+str(i))
+    train = basic_train[feature].copy()
+    test  = basic_test[feature].copy()
+
+    train.set_index('pid',inplace=True)
+    test.set_index('pid',inplace=True)
+
+    tot = pd.concat([train,test],axis=0)
+    group = tot.groupby('uid')
+    for f in [np.mean,np.std]:
+        train = train.merge(group.agg(f),left_on = 'uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
+        test   = test.merge(group.agg(f),left_on='uid',right_index=True,how='left',suffixes=('','_'+f.func_name))
+
+    train.drop(['topic_%d' %i for i in range(0,25)],axis=1,inplace=True)
+    test.drop(['topic_%d' %i for i in range(0,25)],axis=1,inplace=True)
+
+    train.fillna(-1,inplace=True)
+    test.fillna(-1,inplace=True)
+
+    train.drop('uid',axis=1,inplace=True)
+    test.drop('uid',axis=1,inplace=True)
+
+    return train,test
 
