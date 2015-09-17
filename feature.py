@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import re
 from setting import func
+from sklearn import mixture
 
 def  user_basic_feature(basic_train,basic_test):
     '''
@@ -136,3 +137,57 @@ def  time_feature(basic_train,basic_test):
 
 
 def key_word_feature(basic_train,basic_test):
+
+    def find_string(x):
+        if reg.search(x):
+            return 1
+        else:
+            return 0
+
+    train = basic_train[['raw_corpus']].copy()
+    test  = basic_test[['raw_corpus']].copy()
+    wenben = ['创业','分享自','知乎','正品','机器学习','大数据','python','公开课','论文','周杰伦','推荐','美女','预约','曝光',\
+          '优酷','天气','吐槽','双11','百度钱包','狂欢节','美拍','校园招聘','骚扰他人','人身攻击','有才','余额宝','mysql','客户端',\
+          '抢购','降价','优惠活动','《','幸运用户','虾米音乐','过节','嘻嘻','陌陌','签到','死亡','身亡','综合运势','星座','呵呵','看过《',\
+          'tmd','TMD','腐败','红包','反腐','我参与了','转发','re']
+    for string in wenben:
+        reg  = re.compile(string)
+        train[string] = train['raw_corpus'].map(lambda x : reg.subn('',x)[1])
+        test[string] = test['raw_corpus'].map(lambda x:reg.subn('',x)[1])
+
+    train.drop('raw_corpus',axis=1,inplace=True)
+    test.drop('raw_corpus',axis=1,inplace=True)
+
+    return train,test
+
+def clustering_feature(basic_train,basic_test):
+
+    feature = ['share_mean','comment_mean','zan_mean','share_amax','comment_amax','zan_amax',
+                    'share_amin','comment_amin','zan_amin','share_std','comment_std','zan_std',
+                    'content_len_mean','链接_mean','//@_mean','@_mean','#_mean','【_mean','《_mean','\[_mean','tot_counts',
+                    'content_len_amax','链接_amax','//@_amax','@_amax','#_amax','【_amax','《_amax','\[_amax',
+                    'content_len_amin','链接_amin','//@_amin','@_amin','#_amin','【_amin','《_amin','\[_amin',
+                    'content_len_std','链接_std','//@_std','@_std','#_std','【_std','《_std','\[_std',
+                    'ratio_week0','ratio_week1','ratio_week2','ratio_week3','ratio_week4','ratio_week5','ratio_week6','uid']
+    data = pd.concat([basic_train[feature],basic_test[feature]],axis=0)
+    data = data.groupby('uid').agg(lambda x:np.unique(x))
+
+    bic = []
+    lowest = np.infty
+    flag = 0
+    for n_component  in range(24,40,1):
+        gmm = mixture.GMM(n_components=n_component,covariance_type='full')
+        gmm.fit(data.values)
+        bic.append(gmm.bic(data.values))
+        print bic[-1],n_component
+        if bic[-1]<lowest:
+            lowest = bic[-1]
+            best_gmm = gmm
+            flag = 0
+        else:
+            flag +=1
+        if flag >6:
+            print n_component
+            break
+    return best_gmm.predict_proba(data.values),best_gmm,data.index
+
