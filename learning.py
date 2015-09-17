@@ -1,34 +1,17 @@
 __author__ = 'DongXu'
 
+import validation
 import numpy as np
-import cPickle
-from  multiprocessing import  Pool
-import logging
-import multiprocessing
-
-from sklearn.ensemble import AdaBoostClassifier,AdaBoostRegressor,\
-RandomForestClassifier,RandomForestRegressor,GradientBoostingClassifier,GradientBoostingRegressor
-from sklearn.tree import DecisionTreeRegressor,DecisionTreeClassifier
-
-def clf(num, train_x,  train_y, train_y_class):
-    logging.info("Start to learning clf :" + str(num))
-    c = GradientBoostingClassifier(learning_rate=0.1,n_estimators=1500,subsample=0.5,max_leaf_nodes=10,max_features=50,verbose=2)
-    weight = train_y +1
-    c.fit(train_x,train_y_class,sample_weight=weight)
-    return c,num,'clf'
-
-
-def regression(num,train_x,train_y):
-    logging.info("start to learning regression :" + str(num))
-    regressor =GradientBoostingRegressor(learning_rate=0.1,n_estimators=1500,subsample=0.5,max_leaf_nodes= 10,max_features=50,verbose=2)
-    regressor.fit(train_x,train_y,sample_weight=train_y+1)
-    return regressor,num,'regression'
+import  logging
+import access_data
+from sklearn.ensemble import RandomForestClassifier,RandomForestRegressor
 
 if __name__ == '__main__':
 
     logging.root.setLevel(logging.INFO)
     logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
-    multiprocessing.freeze_support()
+
+    logging.info('Loading data...')
 
     train_x = np.load('processed_data/train_np.npy')
     test_x  = np.load('processed_data/test_np.npy')
@@ -38,23 +21,24 @@ if __name__ == '__main__':
     train_y_class[train_y[:,0]>1,0] = 1
     train_y_class[train_y[:,1]>0,1] = 1
     train_y_class[train_y[:,2]>0,2] = 1
-    #train_y = np.log1p(train_y)
+    train_y = np.log1p(train_y)
 
-    p = Pool(1)
-    temp = []
-    for num in xrange(1):
-        #temp.append(p.apply_async(clf,args=(num,train_x,train_y[:,num],train_y_class[:,num])))
-        #mask = train_y_class[:,num] >0
-        temp.append(p.apply_async(regression,args=(num,train_x,train_y[:,num])))
-    p.close()
-    p.join()
-    result = []
-    for i in temp:
-        result.append(i.get())
-    with open('result','wb') as file:
-        cPickle.dump(result,file)
+    train_basic = pd.read_pickle('raw_data/basic_train')
+#    score = validation.make_scorer(validation.my_score_func,greater_is_better=True)
 
+    logging.info('Start to classify')
+    clf = RandomForestClassifier(n_estimators=1000,max_features=30,max_leaf_nodes=10000,n_jobs=3,verbose=2)
+    clf.fit(train_x,train_y_class)
+    test_predict = clf.predict(test_x)
 
+    logging.info('Start to regression')
+    for i in xrange(3):
+        mask = train_y_class[:,i] >0
+        regressor = RandomForestRegressor(n_estimators=1000,max_features=50,max_leaf_nodes=10000,n_jobs=4,verbose=2)
+        regressor.fit(train_x[mask],train_y[mask,i],sample_weight=train_y[mask,i])
+        test_predict.loc[test_predict[i]>0,i] = np.rint(regressor.predict(test_x[(test_predict[i]>0).values]))
 
-
+    test_predict[test_predict<0] = 0
+    logging.info('Start to output result')
+    access_data.output_result(test_predict,'2015-9-17')
 

@@ -26,6 +26,12 @@ def load_raw_data():
         train[i] = train[i].astype(np.int32)
     return train,test
 
+def load_raw_data_new():
+    with open(setting.raw_data_dir+'weibo_predict_data2.txt')  as file:
+        test  = [line.strip().split("\t") for line in file.readlines()]
+    with open(setting.raw_data_dir+'weibo_train_data2.txt')  as file:
+        train = [line.strip().split("\t") for line in file.readlines()]
+    test = pd.DataFrame(test)
 def  save_processed_data(x,name):
     x.to_pickle(setting.processed_data_dir+name)
 
@@ -40,7 +46,6 @@ def output_result(result,name,docs=None):
     '''
     uid = pd.read_pickle(setting.processed_data_dir + 'uid_test')
     pid = pd.read_pickle(setting.processed_data_dir + 'pid_test')
-
 #打印参数表
     if docs != None :
         docs = pd.Series(docs)
