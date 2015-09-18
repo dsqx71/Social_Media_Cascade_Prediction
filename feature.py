@@ -229,7 +229,18 @@ def lda_feature(basic_train,basic_test):
 
 def sentiment_feature(basic_train,basic_test):
 
-    result = []
+    def compute_sentiment_scores(line):
+        tot = 0
+        words = line.split(' ')
+        for word in words:
+            if (word == sentiment['词语']).any():
+                mask = (sentiment['词语'] == word).argmax()
+                if sentiment.loc[mask,'极性'] == 0:
+                    continue
+                flag = 1 if (sentiment.loc[mask,'极性']=='1')else -1
+                tot += flag * int(sentiment.loc[mask,'强度'])
+        return tot
+
     with open('sentiment_word.csv') as file:
         result = [line.strip().split('\t')  for line in file.readlines()]
     for line in result:
@@ -241,6 +252,33 @@ def sentiment_feature(basic_train,basic_test):
     sentiment.drop([7,8,9],axis=1,inplace=True)
     sentiment.columns = ['词语','词性','词义数','词义序号','分类','强度','极性']
 
-    train  = basic_train['clean&segment']
-    test   = basic_test['clean&segment']
+    train  = basic_train['clean&segment'].copy()
+    test   = basic_test['clean&segment'].copy()
 
+    sentiment_scores = []
+    for line in train:
+        sentiment_scores.append(compute_sentiment_scores(line))
+    train['sentiment_scores'] = sentiment_scores
+
+    sentiment_scores = []
+    for line in test:
+        sentiment_scores.append(compute_sentiment_scores(line))
+    test['sentiment_scores'] = sentiment_scores
+
+    train.drop('clean&segment',axis=1,inplace=True)
+    test.drop('clean&segment',axis=1,inplace=True)
+
+    return train,test
+
+def find_seven_days(basic_train,basic_test):
+    train  = basic_train[['uid','pid','time']].copy()
+    test   = basic_test[['uid','pid','time']].copy()
+
+    tot = pd.concat([train,test],axis=0)
+    tot.sort(columns=['uid','time'],inplace=True)
+
+    tot['seven_days']  = np.zeros(tot.shape[0])
+
+    for i in xrange(tot.shape[0]-2,-1,-1):
+        if (tot.loc[i,'uid'] == tot[i+1,'uid'])&&((tot.loc[i+1,'time']-tot.loc[i,'time']).days <=7):
+            tot.loc[i,'seven_days'] =  1 + tot.loc[i+1,'seven_days']
