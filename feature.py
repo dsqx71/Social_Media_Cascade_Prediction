@@ -227,3 +227,20 @@ def lda_feature(basic_train,basic_test):
 
     return train,test
 
+def sentiment_feature(basic_train,basic_test):
+
+    result = []
+    with open('sentiment_word.csv') as file:
+        result = [line.strip().split('\t')  for line in file.readlines()]
+    for line in result:
+        if len(line)>10:
+            result.remove(line)
+    sentiment = pd.DataFrame(columns=result[0],data=result[1:])
+    sentiment['词语']=sentiment['词语'].map(lambda x:x.decode("utf-8"))
+    sentiment.columns = range(10)
+    sentiment.drop([7,8,9],axis=1,inplace=True)
+    sentiment.columns = ['词语','词性','词义数','词义序号','分类','强度','极性']
+
+    train  = basic_train['clean&segment']
+    test   = basic_test['clean&segment']
+
