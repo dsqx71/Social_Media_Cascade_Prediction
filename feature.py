@@ -275,10 +275,22 @@ def find_seven_days(basic_train,basic_test):
     test   = basic_test[['uid','pid','time']].copy()
 
     tot = pd.concat([train,test],axis=0)
-    tot.sort(columns=['uid','time'],inplace=True)
+    tot.sort(columns=['uid','time','pid'],inplace=True)
 
     tot['seven_days']  = np.zeros(tot.shape[0])
 
-    for i in xrange(tot.shape[0]-2,-1,-1):
-        if (tot.loc[i,'uid'] == tot[i+1,'uid'])&&((tot.loc[i+1,'time']-tot.loc[i,'time']).days <=7):
-            tot.loc[i,'seven_days'] =  1 + tot.loc[i+1,'seven_days']
+    for i in xrange(tot.shape[0]-1):
+        point = i+1
+        while (tot.loc[point,'uid']==tot.loc[i,'uid'])&&((tot.loc[point,'time']-tot.loc[i,'time']).days<=7):
+            tot.loc[i,'seven_days'] +=1
+            point +=1
+
+    train = train.merge(tot[['pid','seven_days']],left_on='pid',right_on='pid',how='left')
+    test   = test.merge(tot[['pid','seven_days']],left_on='pid',rigth_on='pid',how='left')
+
+    train.drop('uid',axis=1,inplace=True)
+    test.drop('uid',axis=1,inplace=True)
+    return train,test
+
+def find_valiation(basic_train,basic_test):
+
