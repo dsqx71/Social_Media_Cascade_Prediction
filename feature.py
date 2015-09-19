@@ -4,7 +4,7 @@ import numpy as np
 import re
 from setting import func
 from sklearn import mixture
-
+from collections import deque
 def  user_basic_feature(basic_train,basic_test):
     '''
             根据基本的特征进行扩展,增加统计特征，min，max，std，histogram等
@@ -276,7 +276,7 @@ def sentiment_feature(basic_train,basic_test):
     test.set_index('pid',inplace=True)
     return train,test
 
-def find_seven_days(basic_train,basic_test):
+def find_seven_days_old(basic_train,basic_test):
     train  = basic_train[['uid','pid','time']].copy()
     test   = basic_test[['uid','pid','time']].copy()
 
@@ -300,5 +300,36 @@ def find_seven_days(basic_train,basic_test):
     test.set_index('pid',inplace=True)
     return train,test
 
+def find_seven_days_new(basic_train,basic_test):
+    '''
+            用队列来维护
+    '''
+    train  = basic_train[['uid','pid','time']].copy()
+    test   = basic_test[['uid','pid','time']].copy()
+    tot = pd.concat([train,test],axis=0)
+    tot.sort(columns=['uid','time'],inplace=True)
+    tot['seven_days']  = np.zeros(tot.shape[0])
+    tot.index = range(tot.shape[0])
+
+    queue =deque([tot.loc[tot.shape[0]-1,'time']])
+    for x in xrange(tot.shape[0]-2,-1,-1):
+        if tot.loc[x,'uid'] != tot.loc[x+1,'uid']:
+            queue = deque([])
+        if  len(queue)>0:
+            while  (queue[0]-tot.loc[x,'time']).days >7:
+                queue.popleft()
+                if len(queue)==0:
+                    break
+            tot.loc[x,'seven_days'] = len(queue)
+        queue.append(tot.loc[x,'time'])
+
+    train = train.merge(tot[['pid','seven_days']],left_on='pid',right_on='pid',how='left')
+    test   = test.merge(tot[['pid','seven_days']],left_on='pid',right_on='pid',how='left')
+
+    train.drop(['uid','time'],axis=1,inplace=True)
+    test.drop(['uid','time'],axis=1,inplace=True)
+    train.set_index('pid',inplace=True)
+    test.set_index('pid',inplace=True)
+    return train,test
 def find_valiation(basic_train,basic_test):
     pass
