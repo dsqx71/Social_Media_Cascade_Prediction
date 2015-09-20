@@ -10,7 +10,6 @@ import jieba
 from sklearn.preprocessing import LabelEncoder
 import os.path
 from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
-reload(access_data)
 logging.root.setLevel(level=logging.INFO)
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
 

@@ -300,5 +300,3 @@ def find_seven_days(basic_train,basic_test):
     train.set_index('pid',inplace=True)
     test.set_index('pid',inplace=True)
     return train,test
-def find_valiation(basic_train,basic_test):
-    pass
