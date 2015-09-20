@@ -9,15 +9,14 @@ logging.root.setLevel(level=logging.INFO)
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
 logging.info('Start to run_lda.py')
 
-with open(setting.word_segment + 'version2_df_10.txt','r') as file:
+with open(setting.word_segment + 'version3_df_10.txt','r') as file:
     word = [line.decode('utf-8').split(',')[0] for line in file.readlines()]
 
-temp = access_data.load_sparse_csr('Change_df_min/version2_df_min10.npz')
-#因为主题数量影响不会很大
-model = lda.LDA(n_topics=25, n_iter=1000, random_state=1)
+temp = access_data.load_sparse_csr('Change_df_min/version3_df_min10.npz')
+model = lda.LDA(n_topics=25, n_iter=500, random_state=1)
 
 x = model.fit_transform(temp)
-np.save(setting.processed_data_dir + 'lda_result_version2',x)
+np.save(setting.processed_data_dir + 'lda_result_version3',x)
 
 topic_word = model.topic_word_  
 np.save('topic_word_25',topic_word)

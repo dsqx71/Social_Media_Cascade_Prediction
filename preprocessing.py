@@ -10,7 +10,7 @@ import jieba
 from sklearn.preprocessing import LabelEncoder
 import os.path
 from sklearn.feature_extraction.text import CountVectorizer,TfidfVectorizer
-
+reload(access_data)
 logging.root.setLevel(level=logging.INFO)
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s')
 
@@ -52,8 +52,7 @@ def segment_word(raw_data):
         t = []
         for i in xrange(len(x)):
             temp = jieba.cut(x[i],cut_all=False)
-            temp = set(temp)-set(stop)
-            t.append(' '.join(list(temp)))
+            t.append(' '.join([word for word in temp if  word not in stop]))
             if  i % 100000 == 0:
                 logging.info('have segmented %d' % i)
         t = pd.DataFrame(t)
@@ -80,11 +79,9 @@ def encode_label():
 
     addr1 = setting.processed_data_dir + 'uid&pid_train'
     addr2 = setting.processed_data_dir + 'uid&pid_test'
-    if not os.path.exists(addr1):
-        x.to_pickle(addr1)
 
-    if not os.path.exists(addr2):
-        y.to_pickle(addr2)
+    x.to_pickle(addr1)
+    y.to_pickle(addr2)
     return x,y
 
 def bag_of_word(x,y,min_df=15):
@@ -94,10 +91,10 @@ def bag_of_word(x,y,min_df=15):
     vectorizer = CountVectorizer(min_df= min_df ,lowercase=True,stop_words='english',dtype=np.int32)
 
     temp = vectorizer.fit_transform(np.r_[x,y])
-    access_data.save_sparse_csr('Change_df_min/version2_df_min%d'%min_df,temp)
+    access_data.save_sparse_csr('Change_df_min/version3_df_min%d'%min_df,temp)
 
     vacabulary = pd.Series(vectorizer.vocabulary_)
-    vacabulary.to_csv('Change_df_min/version2_df_%d.txt'% min_df,encoding='utf-8')
+    vacabulary.to_csv('Change_df_min/version3_df_%d.txt'% min_df,encoding='utf-8')
 
 
 
