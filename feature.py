@@ -228,22 +228,21 @@ def lda_feature(basic_train,basic_test):
     return train,test
 
 def sentiment_feature(basic_train,basic_test):
+    def compute_scores(x):
+        if x['极性'] =='0':
+            return 0
+        if x['极性'] =='3': 
+            return 0
+        flag =(1 if x['极性']=='1' else -1)
+        return  flag * int(x['强度'])
 
     def compute_sentiment_scores(line):
-        tot = 0
-        words = line.split(' ')
-        for word in words:
-            if (word == sentiment['词语']).any():
-                mask = (sentiment['词语'] == word).argmax()
-                if sentiment.loc[mask,'极性'] == '0':
-                    continue
-                if sentiment.loc[mask,'极性'] == '0':
-                    continue
-
-                flag = 1 if (sentiment.loc[mask,'极性']=='1')else -1
-                tot += flag * int(sentiment.loc[mask,'强度'])
-                #print word,flag,tot
-        return tot
+        words = np.array(line.split(' '))
+        mask = sentiment['词语'].isin(words)
+        if mask.any() == False :
+            return 0
+        else:
+            return sum(sentiment[mask].apply(compute_scores,axis=1))
 
     with open('sentiment_word.csv') as file:
         result = [line.strip().split('\t')  for line in file.readlines()]
@@ -259,15 +258,8 @@ def sentiment_feature(basic_train,basic_test):
     train  = basic_train[['clean&segment','pid']].copy()
     test   = basic_test[['clean&segment','pid']].copy()
 
-    sentiment_scores = []
-    for line in train['clean&segment']:
-        sentiment_scores.append(compute_sentiment_scores(line))
-    train['sentiment_scores'] = sentiment_scores
-
-    sentiment_scores = []
-    for line in test['clean&segment']:
-        sentiment_scores.append(compute_sentiment_scores(line))
-    test['sentiment_scores'] = sentiment_scores
+    train['sentiment'] = train['clean&segment'].map(compute_sentiment_scores)
+    test['sentiment']  = test['clean&segment'].map(compute_sentiment_scores)
 
     train.drop('clean&segment',axis=1,inplace=True)
     test.drop('clean&segment',axis=1,inplace=True)
@@ -276,31 +268,8 @@ def sentiment_feature(basic_train,basic_test):
     test.set_index('pid',inplace=True)
     return train,test
 
-def find_seven_days_old(basic_train,basic_test):
-    train  = basic_train[['uid','pid','time']].copy()
-    test   = basic_test[['uid','pid','time']].copy()
 
-    tot = pd.concat([train,test],axis=0)
-    tot.sort(columns=['uid','time','pid'],inplace=True)
-
-    tot['seven_days']  = np.zeros(tot.shape[0])
-    tot.index = range(tot.shape[0])
-    for i in xrange(tot.shape[0]-1):
-        point = i+1
-        while (tot.loc[point,'uid']==tot.loc[i,'uid'])&((tot.loc[point,'time']-tot.loc[i,'time']).days<=7):
-            tot.loc[i,'seven_days'] +=1
-            point +=1
-
-    train = train.merge(tot[['pid','seven_days']],left_on='pid',right_on='pid',how='left')
-    test   = test.merge(tot[['pid','seven_days']],left_on='pid',right_on='pid',how='left')
-
-    train.drop(['uid','time'],axis=1,inplace=True)
-    test.drop(['uid','time'],axis=1,inplace=True)
-    train.set_index('pid',inplace=True)
-    test.set_index('pid',inplace=True)
-    return train,test
-
-def find_seven_days_new(basic_train,basic_test):
+def find_seven_days(basic_train,basic_test):
     '''
             用队列来维护
     '''
