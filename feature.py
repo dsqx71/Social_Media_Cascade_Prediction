@@ -2,9 +2,11 @@
 import pandas as pd
 import numpy as np
 import re
+import numba
 from setting import func
 from sklearn import mixture
 from collections import deque
+
 def  user_basic_feature(basic_train,basic_test):
     '''
             根据基本的特征进行扩展,增加统计特征，min，max，std，histogram等
@@ -228,6 +230,7 @@ def lda_feature(basic_train,basic_test):
     return train,test
 
 def sentiment_feature(basic_train,basic_test):
+
     def compute_scores(x):
         if x['极性'] =='0':
             return 0
@@ -268,7 +271,6 @@ def sentiment_feature(basic_train,basic_test):
     test.set_index('pid',inplace=True)
     return train,test
 
-
 def find_seven_days(basic_train,basic_test):
     '''
             用队列来维护
@@ -281,6 +283,7 @@ def find_seven_days(basic_train,basic_test):
     tot.index = range(tot.shape[0])
 
     queue =deque([tot.loc[tot.shape[0]-1,'time']])
+    print "finished"
     for x in xrange(tot.shape[0]-2,-1,-1):
         if tot.loc[x,'uid'] != tot.loc[x+1,'uid']:
             queue = deque([])
