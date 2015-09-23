@@ -2,7 +2,7 @@
 import pandas as pd
 import numpy as np
 import re
-import numba
+from numba import jit,int16
 from setting import func
 from sklearn import mixture
 from collections import deque
@@ -231,6 +231,7 @@ def lda_feature(basic_train,basic_test):
 
 def sentiment_feature(basic_train,basic_test):
 
+    @jit
     def compute_scores(x):
         if x['极性'] =='0':
             return 0
@@ -282,18 +283,18 @@ def find_seven_days(basic_train,basic_test):
     tot['seven_days']  = np.zeros(tot.shape[0])
     tot.index = range(tot.shape[0])
 
-    queue =deque([tot.loc[tot.shape[0]-1,'time']])
-    print "finished"
+    queue =deque([tot.at[tot.shape[0]-1,'time']])
+
     for x in xrange(tot.shape[0]-2,-1,-1):
-        if tot.loc[x,'uid'] != tot.loc[x+1,'uid']:
+        if tot.at[x,'uid'] != tot.at[x+1,'uid']:
             queue = deque([])
         if  len(queue)>0:
-            while  (queue[0]-tot.loc[x,'time']).days >7:
+            while  (queue[0]-tot.at[x,'time']).days >7:
                 queue.popleft()
                 if len(queue)==0:
                     break
-            tot.loc[x,'seven_days'] = len(queue)
-        queue.append(tot.loc[x,'time'])
+            tot.at[x,'seven_days'] = len(queue)
+        queue.append(tot.at[x,'time'])
 
     train = train.merge(tot[['pid','seven_days']],left_on='pid',right_on='pid',how='left')
     test   = test.merge(tot[['pid','seven_days']],left_on='pid',right_on='pid',how='left')
@@ -315,7 +316,7 @@ def find_latest(basic_train,basic_test):
 
     mask = tot['uid'] != tot['uid'].shift(-1)
     tot['latest'] = tot['time'].diff().shift(-1).dt.days
-    tot.loc[mask,'latest']  = 365
+    tot.loc[mask,'latest']  = 500
     train = train.merge(tot[['pid','latest']],left_on='pid',right_on='pid',how='left')
     test   = test.merge(tot[['pid','latest']],left_on='pid',right_on='pid',how='left')
 
