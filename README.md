@@ -1,4 +1,4 @@
-##Social Media Cascade Prediction ：S1赛季报告
+##新浪微博互动预测大赛：S1赛季报告
 
 
 作者：董煦
