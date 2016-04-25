@@ -3,9 +3,7 @@
 
 作者：董煦
 
-s1赛季：Rank12   
 
-s2赛季：Rank18
 
 ###[比赛介绍](http://tianchi.aliyun.com/competition/introduction.htm?spm=5176.100068.5678.1.fOqq0e&raceId=5)
 ###预处理
