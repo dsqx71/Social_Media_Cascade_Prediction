@@ -1,20 +1,17 @@
-##新浪微博互动预测大赛：S1赛季报告
+##Social network interaction prediction
 
+Xu Dong
 
-作者：董煦
-
-
-
-###[比赛介绍](http://tianchi.aliyun.com/competition/introduction.htm?spm=5176.100068.5678.1.fOqq0e&raceId=5)
-###预处理
-	1. 删掉同时满足：发出时间相同 & 相似度很高 & 同一作者（不用直接判定而是增加一些能够表现出是无效微博的特征就行）
+###[Description & Data](http://tianchi.aliyun.com/competition/introduction.htm?spm=5176.100068.5678.1.fOqq0e&raceId=5)
+###Preprocessing
+    1. 删掉同时满足：发出时间相同 & 相似度很高 & 同一作者（不用直接判定而是增加一些能够表现出是无效微博的特征就行）
     2. 对连续变量做放缩（有助于提升线性模型的能力）
     3. 用正则表达式把符号特征提取出来
     4. 英文变小写，并删掉中英文的停用词 
     5. 为了让变量连续，把1月改为13月 
-###基础特征
+###Base feature
 	uid,pid,time,share,comment,zan raw_corpus,cleaned&segment,链接，'/@,@,#,【，《，['
-###用户特征
+###User attribute
     1. 用户总的点赞、分享、评论数量的统计量 
     2. 有效微博数量 +  无效的微博数量 + 总微博数量 + 出现在训练集中的数量
     3. 微博的长度的统计值
@@ -22,10 +19,10 @@
     6. 周一到周日发出有效微博的数量/频率/频率的方差
     7. 用户微博的平均主题分布
     8. 用户出现在训练集的次数
-###缺失值处理
+###Missing value processing
 	1.许多std的缺失值暂时 -1 来替代（因为-1能够体现出这条样本是没有std的）
 	2.用户没有出现在训练集中，所以有关share，comment，zan的统计量都设为0（两类测试集分开预测,所以这里设定的值不重要，因为在这一类训练集中不使用上述特征）
-###微博特征
+###Text feature
     1. 原始文本长度 + 清理后的文本长度
     2. 特殊字符： [r'http[0-9a-zA-Z?:=._@%/\-#&\+|]+' ,r'//@',   r'@' ,  r'#' ,  r'【' ,r'《' ,r'\[' ]
     3. 提取 tf-idf 
@@ -36,13 +33,12 @@
     8. 与最近n次有效微博的文本相似度
     9. 与其他用户的微博相似度
         
-###模型类特征
-    1. LDA主题
-    2. 领袖识别：设定一个阈值，在训练集中高于它的设定为意见领袖，把训练集拆分为小的训练集和验证集
-    （把阈值也作为一个可调参数，通过验证集来选，可以设定多个阈值），把预测的结果作为特征。
-    3. 情感极性作为特征	
-    4. 高斯混合模型：对用户聚类
-    5. 协同过滤（主题-微博矩阵
+###Extract features using unsupervised learning models
+    1. Latent dirichlet allocation(LDA)
+    2. Opinion leader identification
+    3. sentiment analysis
+    4. Gaussian Mixture Model
+    5. collaborative filtering
 
 ### 多次预测（样本倾斜）
 	1.测试集分为两类：用户在训练集出现过+没有出现，两类分开预测，前者可以多用一些特殊的特征，比如share，comment，zan的统计量等，后者不能直接出现这些特征。两类模型分开训练
@@ -60,7 +56,7 @@
  - 前几个月一定放在训练集，后几个月随机抽取一部分作为训练集，另一部分为验证集（3折）
  - 加权结合上述方法
 
-###发现
+###Observation
 
 	1 分类和回归的特征重要度几乎不同，可能说明
 	2 有些数据在训练集中完全没有出现的。比如：月份，用户
@@ -77,7 +73,7 @@
     13增加comment，share，zan 高的权重
 
 
-###感悟
+###Reflection
 - 每次做特征的时候，一定要进行自动化检验，比如样本数量，缺失值比例等等，用python的装饰器搞定
 - 如果数据很大，通常先降采样，快速特征抽取代码。
 - 抽取不同的特征时，可以放在不同的函数中，做到低耦合，然后分配进程池，做并行计算。
